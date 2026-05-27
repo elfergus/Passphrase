@@ -10,7 +10,7 @@
   <style>
     /* =====================================================
        PASSPHRASE — Syracuse University ITS
-       Daily 16-character phrase guessing game
+       Daily phrase guessing game
        WCAG AA compliant
        Colors: SU Orange #B83C00 (5.7:1), SU Blue #003087 (~10:1)
     ===================================================== */
@@ -112,7 +112,7 @@
       margin-bottom: 10px;
       font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
     }
-    .cat-badge i { font-size: 13px; }
+    .cat-badge i { font-size: 14px; }
 
     /* ---- Hint text ---- */
     .hint-text {
@@ -255,7 +255,7 @@
       position: absolute;
       bottom: 2px;
       right: 3px;
-      font-size: 8px;
+      font-size: 14px;
       line-height: 1;
       pointer-events: none;
       user-select: none;
@@ -303,7 +303,7 @@
       color: #1a1a1a;
       transition: filter .1s;
     }
-    .pp-key-wide { min-width: 54px; font-size: 10px; letter-spacing: .5px; }
+    .pp-key-wide { min-width: 54px; font-size: 14px; letter-spacing: .5px; }
     .pp-key:hover { filter: brightness(.92); }
     .pp-key:active { transform: scale(.96); }
     .pp-key:focus-visible { outline: 3px solid #B83C00; outline-offset: 2px; z-index: 1; position: relative; border-radius: 5px; }
@@ -323,7 +323,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 10px;
+      font-size: 14px;
       color: #888;
       letter-spacing: .5px;
       font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
@@ -333,7 +333,7 @@
       border-radius: 3px;
       flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 8px; font-weight: 700; color: #fff;
+      font-size: 14px; font-weight: 700; color: #fff;
     }
 
     /* ---- Game over / Share ---- */
@@ -356,7 +356,7 @@
       border-radius: 5px;
       font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 14px;
       cursor: pointer;
       letter-spacing: 2px;
       transition: background .15s;
@@ -365,7 +365,7 @@
     .share-btn:focus-visible { outline: 3px solid #B83C00; outline-offset: 3px; border-radius: 5px; }
     .sub-note {
       margin: 0;
-      font-size: 11px;
+      font-size: 14px;
       color: #888;
       letter-spacing: 1px;
       font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
@@ -373,9 +373,9 @@
 
     /* ---- Responsive ---- */
     @media (max-width: 480px) {
-      .pp-cell { width: 30px; height: 34px; font-size: 12px; }
-      .pp-key { height: 46px; min-width: 30px; font-size: 12px; }
-      .pp-key-wide { min-width: 46px; font-size: 9px; }
+      .pp-cell { width: 30px; height: 34px; font-size: 14px; }
+      .pp-key { height: 46px; min-width: 30px; font-size: 14px; }
+      .pp-key-wide { min-width: 46px; font-size: 14px; }
       .header-title h1 { font-size: 20px; letter-spacing: 5px; }
     }
   </style>
@@ -814,13 +814,13 @@
 
     if (state.hintOn) {
       html += `<div class="hint-text" role="note" aria-label="Hint: ${hint}">
-        <i class="ti ti-bulb" style="font-size:13px;vertical-align:-1px;margin-right:5px" aria-hidden="true"></i>${hint}
+        <i class="ti ti-bulb" style="font-size:14px;vertical-align:-1px;margin-right:5px" aria-hidden="true"></i>${hint}
       </div>`;
     }
 
     if (state.freePos !== null && !state.hintOn) {
-      html += `<div class="hint-text" style="font-style:normal;font-size:11px" role="note">
-        <i class="ti ti-key" style="font-size:13px;vertical-align:-1px;margin-right:5px;color:#8a6114" aria-hidden="true"></i>
+      html += `<div class="hint-text" style="font-style:normal;font-size:14px" role="note">
+        <i class="ti ti-key" style="font-size:14px;vertical-align:-1px;margin-right:5px;color:#8a6114" aria-hidden="true"></i>
         One letter revealed — find the gold cell in your row
       </div>`;
     }
