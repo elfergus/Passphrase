@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Passphrase — Syracuse University ITS</title>
+  <meta name="description" content="Passphrase is a daily word game from Syracuse University ITS. Guess the 16-character phrase in 6 tries.">
+  <!-- Tabler Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    /* =====================================================
+       PASSPHRASE — Syracuse University ITS
+       Daily 16-character phrase guessing game
+       WCAG AA compliant
+       Colors: SU Orange #B83C00 (5.7:1), SU Blue #003087 (~10:1)
+    ===================================================== */
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* Screen-reader-only utility */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    /* Respect user motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      .pp-shake { animation: none !important; }
+      .pp-blink { animation: none !important; border-color: #888 !important; }
+      * { transition-duration: .01ms !important; }
+    }
+
+    /* ---- Page shell ---- */
+    body {
+      margin: 0;
+      background: #f8f7f5;
+      color: #1a1a1a;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      body { background: #121212; color: #e8e8e8; }
+      .cell-empty { background: #1e1e1e !important; border-color: #444 !important; color: #e8e8e8 !important; }
+      .cell-filled { background: #2a2a2a !important; border-color: #666 !important; color: #e8e8e8 !important; }
+      .pp-key { background: #2a2a2a !important; color: #e8e8e8 !important; border-color: #444 !important; }
+      .pp-key.ka { background: #1a1a1a !important; color: #666 !important; border-color: #333 !important; }
+      .cat-badge { background: #1e1e1e !important; border-color: #444 !important; color: #aaa !important; }
+      .hint-text { background: #1e1e1e !important; border-color: #444 !important; color: #aaa !important; }
+      .pu-btn { border-color: #555 !important; color: #aaa !important; }
+      .pu-btn:hover { background: #2a2a2a !important; color: #e8e8e8 !important; }
+      .share-btn { border-color: #666 !important; color: #e8e8e8 !important; }
+      .share-btn:hover { background: #2a2a2a !important; }
+      .legend-item { color: #888 !important; }
+      .gh-border { border-color: #333 !important; }
+      .word-div { background: #444 !important; }
+      .sub-note { color: #666 !important; }
+      .msg-neutral { background: #2a2a2a !important; color: #e8e8e8 !important; }
+    }
+
+    /* ---- Game wrapper ---- */
+    #passphrase-game {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 12px 40px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* ---- Header ---- */
+    .game-header {
+      width: 100%;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .game-header.gh-border { border-color: #ddd; }
+    .header-title {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .header-title h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 7px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+    }
+    .header-sub {
+      margin: 4px 0 0;
+      font-size: 10px;
+      color: #888;
+      letter-spacing: 2px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+    }
+
+    /* ---- Category badge ---- */
+    .cat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0eeeb;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 10px;
+      color: #666;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+    }
+    .cat-badge i { font-size: 13px; }
+
+    /* ---- Hint text ---- */
+    .hint-text {
+      background: #f0eeeb;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 12px;
+      color: #555;
+      text-align: center;
+      max-width: 540px;
+      margin: 0 0 12px;
+      font-style: italic;
+      line-height: 1.6;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+    }
+
+    /* ---- Power-up buttons ---- */
+    .pu-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .pu-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid #bbb;
+      border-radius: 20px;
+      padding: 7px 16px;
+      font-size: 10px;
+      color: #666;
+      cursor: pointer;
+      letter-spacing: 1px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+      transition: background .15s, color .15s;
+    }
+    .pu-btn:hover { background: #f0eeeb; color: #333; }
+    .pu-btn:focus-visible { outline: 3px solid #B83C00; outline-offset: 3px; border-radius: 20px; }
+    .pu-btn i { font-size: 14px; }
+
+    /* ---- Message bar ---- */
+    .game-msg {
+      padding: 8px 24px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-align: center;
+      max-width: 580px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+    }
+    .msg-win { background: #B83C00; color: #fff; }
+    .msg-lose { background: #444; color: #fff; }
+    .msg-warn { background: #003087; color: #fff; }
+    .msg-neutral { background: #f0eeeb; color: #333; }
+
+    /* ---- Grid ---- */
+    .pp-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .pp-row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    /* Word boundary divider */
+    .word-gap {
+      width: 10px;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .word-div {
+      width: 1px;
+      height: 24px;
+      background: #ccc;
+    }
+
+    /* ---- Cells ---- */
+    .pp-cell {
+      position: relative;
+      width: 36px;
+      height: 40px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      border: 2px solid;
+      transition: background .15s, border-color .15s;
+    }
+    .cell-empty {
+      background: #fff;
+      border-color: #ccc;
+      color: #1a1a1a;
+    }
+    .cell-filled {
+      background: #f0eeeb;
+      border-color: #999;
+      color: #1a1a1a;
+    }
+    /* SU Orange — 5.7:1 contrast with white ✓ WCAG AA */
+    .cell-correct {
+      background: #B83C00;
+      border-color: #B83C00;
+      color: #fff;
+    }
+    /* SU Blue — ~10:1 contrast with white ✓ WCAG AA */
+    .cell-present {
+      background: #003087;
+      border-color: #003087;
+      color: #fff;
+    }
+    /* Gray — 5.3:1 contrast with white ✓ WCAG AA */
+    .cell-absent {
+      background: #6b6b6b;
+      border-color: #6b6b6b;
+      color: #fff;
+    }
+    /* Free letter — dark text on amber ✓ WCAG AA */
+    .cell-free {
+      background: #FAC775;
+      border-color: #8a6114;
+      color: #5a3d00;
+    }
+
+    /* Non-color corner indicators — secondary cue for colorblind users (WCAG 1.4.1) */
+    .cell-indicator {
+      position: absolute;
+      bottom: 2px;
+      right: 3px;
+      font-size: 8px;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      font-family: Verdana, sans-serif;
+    }
+    .cell-correct .cell-indicator,
+    .cell-present .cell-indicator,
+    .cell-absent .cell-indicator { color: rgba(255,255,255,0.9); }
+    .cell-free .cell-indicator { color: rgba(90,61,0,0.75); }
+
+    /* ---- Animations ---- */
+    .pp-shake { animation: ppShake .4s; }
+    @keyframes ppShake {
+      10%, 90% { transform: translateX(-3px); }
+      20%, 80% { transform: translateX(5px); }
+      30%, 50%, 70% { transform: translateX(-4px); }
+      40%, 60% { transform: translateX(4px); }
+    }
+    .pp-blink { animation: ppBlink 1s step-end infinite; }
+    @keyframes ppBlink {
+      0%, 100% { border-color: #999 !important; }
+      50% { border-color: #ddd !important; }
+    }
+
+    /* ---- On-screen keyboard ---- */
+    .pp-keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .kbd-row { display: flex; gap: 5px; }
+    .pp-key {
+      height: 52px;
+      min-width: 36px;
+      padding: 0 4px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      background: #f0eeeb;
+      color: #1a1a1a;
+      transition: filter .1s;
+    }
+    .pp-key-wide { min-width: 54px; font-size: 10px; letter-spacing: .5px; }
+    .pp-key:hover { filter: brightness(.92); }
+    .pp-key:active { transform: scale(.96); }
+    .pp-key:focus-visible { outline: 3px solid #B83C00; outline-offset: 2px; z-index: 1; position: relative; border-radius: 5px; }
+    .kc { background: #B83C00 !important; color: #fff !important; border-color: #B83C00 !important; }
+    .kp { background: #003087 !important; color: #fff !important; border-color: #003087 !important; }
+    .ka { background: #d8d6d3 !important; color: #888 !important; border-color: #ccc !important; }
+
+    /* ---- Legend ---- */
+    .pp-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #888;
+      letter-spacing: .5px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+    }
+    .legend-dot {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; font-weight: 700; color: #fff;
+    }
+
+    /* ---- Game over / Share ---- */
+    .gameover-panel {
+      text-align: center;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: transparent;
+      border: 1px solid #999;
+      color: #1a1a1a;
+      padding: 10px 28px;
+      border-radius: 5px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: background .15s;
+    }
+    .share-btn:hover { background: #f0eeeb; }
+    .share-btn:focus-visible { outline: 3px solid #B83C00; outline-offset: 3px; border-radius: 5px; }
+    .sub-note {
+      margin: 0;
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 1px;
+      font-family: 'Sherman Sans', 'Verdana', Geneva, sans-serif;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 480px) {
+      .pp-cell { width: 30px; height: 34px; font-size: 12px; }
+      .pp-key { height: 46px; min-width: 30px; font-size: 12px; }
+      .pp-key-wide { min-width: 46px; font-size: 9px; }
+      .header-title h1 { font-size: 20px; letter-spacing: 5px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen-reader live regions — always present in DOM -->
+  <div id="sr-msg" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+  <div id="sr-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <main id="passphrase-game" role="application" aria-label="Passphrase daily word game">
+    <!-- Rendered by JavaScript -->
+  </main>
+
+  <script>
+  // =====================================================
+  // PASSPHRASE — Phrase library
+  // All phrases must be exactly 16 characters (incl. spaces).
+  // To add new phrases, append to this array following the
+  // same format: { phrase, category, icon, hint }
+  // =====================================================
+  const PHRASE_DATA = [
+    // TECH & SECURITY
+    { phrase: "BACKUP YOUR DATA", category: "Tech & Security", icon: "ti-shield", hint: "Essential daily habit — what would you lose if your drive died today?" },
+    { phrase: "SECURE YOUR WIFI", category: "Tech & Security", icon: "ti-shield", hint: "The first step to protecting your home network" },
+    { phrase: "STAY SAFE ONLINE", category: "Tech & Security", icon: "ti-shield", hint: "The golden rule of internet use" },
+    { phrase: "LOCK YOUR SCREEN", category: "Tech & Security", icon: "ti-shield", hint: "Do this every single time you step away from your computer" },
+    { phrase: "THINK CRITICALLY", category: "Tech & Security", icon: "ti-shield", hint: "The best defense against misinformation and phishing" },
+    { phrase: "TRUST BUT VERIFY", category: "Tech & Security", icon: "ti-shield", hint: "Reagan's Cold War motto — now applies to suspicious links and emails" },
+    { phrase: "ZERO TRUST MODEL", category: "Tech & Security", icon: "ti-shield", hint: "A modern cybersecurity framework: never assume, always verify" },
+    { phrase: "PROMPT WITH CARE", category: "Tech & Security", icon: "ti-shield", hint: "AI advice: what you put in shapes what comes out" },
+    { phrase: "MFA EVERY LOG IN", category: "Tech & Security", icon: "ti-shield", hint: "Multi-factor authentication — two steps are always better than one" },
+    { phrase: "PHISHING IS LAME", category: "Tech & Security", icon: "ti-shield", hint: "A hacker technique disguised as a legitimate email" },
+    { phrase: "GUARD YOUR INBOX", category: "Tech & Security", icon: "ti-shield", hint: "Your email is the front door to almost everything" },
+    // GEOGRAPHY
+    { phrase: "AMAZON RUNS DEEP", category: "Geography", icon: "ti-map", hint: "The world's largest river by water volume" },
+    { phrase: "MOUNT FUJI JAPAN", category: "Geography", icon: "ti-map", hint: "An iconic snow-capped volcano and UNESCO World Heritage site" },
+    { phrase: "ROME WASNT BUILT", category: "Geography", icon: "ti-map", hint: "...in a day — referring to Italy's Eternal City" },
+    { phrase: "NILE IS IN EGYPT", category: "Geography", icon: "ti-map", hint: "The world's longest river runs through this North African country" },
+    { phrase: "GREAT WALL CHINA", category: "Geography", icon: "ti-map", hint: "A 13,000-mile ancient fortification" },
+    { phrase: "KILIMANJARO PEAK", category: "Geography", icon: "ti-map", hint: "Africa's highest mountain, standing in Tanzania" },
+    { phrase: "SYDNEY HAS OPERA", category: "Geography", icon: "ti-map", hint: "This Australian city's iconic harbor landmark" },
+    { phrase: "HAWAII VOLCANOES", category: "Geography", icon: "ti-map", hint: "National park on the Big Island, where lava still flows" },
+    { phrase: "VENICE ON CANALS", category: "Geography", icon: "ti-map", hint: "An Italian city built entirely on water and islands" },
+    { phrase: "TOKYO TOWER TALL", category: "Geography", icon: "ti-map", hint: "Japan's capital is home to this famous steel-lattice landmark" },
+    // MOVIES
+    { phrase: "MAY THE FORCE BE", category: "Movies", icon: "ti-movie", hint: "A Star Wars farewell blessing — the last word is 'with you'" },
+    { phrase: "THE NAME IS BOND", category: "Movies", icon: "ti-movie", hint: "007's signature self-introduction style" },
+    { phrase: "YOURE GONNA NEED", category: "Movies", icon: "ti-movie", hint: "From Jaws: '...a bigger boat'" },
+    { phrase: "NOBODY PUTS BABY", category: "Movies", icon: "ti-movie", hint: "Dirty Dancing: the full line ends with '...in a corner'" },
+    { phrase: "ALL WORK NO PLAY", category: "Movies", icon: "ti-movie", hint: "Jack Torrance typed this endlessly in The Shining" },
+    { phrase: "GO AHEAD MAKE MY", category: "Movies", icon: "ti-movie", hint: "Dirty Harry's daring challenge — the last word is 'day'" },
+    { phrase: "REDRUM IS MURDER", category: "Movies", icon: "ti-movie", hint: "The Shining's haunting reverse word, spelled out" },
+    { phrase: "YOU TALKIN TO ME", category: "Movies", icon: "ti-movie", hint: "Taxi Driver's famous mirror monologue, paraphrased" },
+    { phrase: "LIFE FINDS A WAY", category: "Movies", icon: "ti-movie", hint: "Jeff Goldblum's immortal Jurassic Park wisdom" },
+    // MUSIC
+    { phrase: "IS THIS THE REAL", category: "Music", icon: "ti-music", hint: "Opening words of Bohemian Rhapsody — '...life?'" },
+    { phrase: "BORN TO RUN FREE", category: "Music", icon: "ti-music", hint: "Springsteen's Born to Run anthem spirit, paraphrased" },
+    { phrase: "DONT STOP BELIEV", category: "Music", icon: "ti-music", hint: "Journey's eternal karaoke anthem — cut short by the 16-char limit" },
+    { phrase: "JOLENE PLEASE NO", category: "Music", icon: "ti-music", hint: "Dolly Parton's plea to a rival, paraphrased" },
+    { phrase: "QUEEN ROCKS HARD", category: "Music", icon: "ti-music", hint: "Freddie Mercury's legendary band, simply described" },
+    { phrase: "BEETHOVEN ROCKED", category: "Music", icon: "ti-music", hint: "Ludwig van B's legacy, stated informally" },
+    // LITERATURE
+    { phrase: "BIG BROTHER SEES", category: "Literature", icon: "ti-book", hint: "Orwell's 1984: the surveillance state's most chilling idea" },
+    { phrase: "ROMEO MET JULIET", category: "Literature", icon: "ti-book", hint: "Shakespeare's most famous and fateful first encounter" },
+    { phrase: "SHERLOCK DEDUCED", category: "Literature", icon: "ti-book", hint: "What Conan Doyle's famous detective always did brilliantly" },
+    { phrase: "ALICE IN WONDERS", category: "Literature", icon: "ti-book", hint: "Lewis Carroll's girl who fell down the rabbit hole" },
+    { phrase: "WONDERFUL WIZARD", category: "Literature", icon: "ti-book", hint: "The humbug behind the curtain at the end of the yellow brick road" },
+    { phrase: "REVENGE IS SWEET", category: "Literature", icon: "ti-book", hint: "The Count of Monte Cristo's core motivating philosophy" },
+    // SPORTS
+    { phrase: "STING LIKE A BEE", category: "Sports", icon: "ti-trophy", hint: "Muhammad Ali's fighting philosophy — the second half of his famous line" },
+    { phrase: "SERENA DOMINATED", category: "Sports", icon: "ti-trophy", hint: "Williams' entire tennis career summarized in one word" },
+    { phrase: "JORDAN FLEW HIGH", category: "Sports", icon: "ti-trophy", hint: "Air Jordan's signature move, described plainly" },
+    { phrase: "TOUCHDOWN SCORED", category: "Sports", icon: "ti-trophy", hint: "The ultimate goal in American football, achieved" },
+    { phrase: "ACE SERVE WINNER", category: "Sports", icon: "ti-trophy", hint: "Tennis: a first serve the opponent cannot even touch" },
+    { phrase: "CHECKMATE IN TWO", category: "Sports", icon: "ti-trophy", hint: "The dream of every chess player mid-game" },
+    { phrase: "HOLE IN ONE GOLF", category: "Sports", icon: "ti-trophy", hint: "The rarest and most celebrated shot on the course" },
+    { phrase: "CYCLING THE TOUR", category: "Sports", icon: "ti-trophy", hint: "France's most grueling annual bike race" },
+    { phrase: "HOME RUN BY BABE", category: "Sports", icon: "ti-trophy", hint: "Ruth's specialty on the baseball diamond" },
+    { phrase: "PHELPS SWAM FAST", category: "Sports", icon: "ti-trophy", hint: "Michael's Olympic swimming career, put simply" },
+    // SCIENCE
+    { phrase: "NEWTON SAW APPLE", category: "Science", icon: "ti-atom", hint: "The (probably apocryphal) gravity revelation story" },
+    { phrase: "RELATIVITY ROCKS", category: "Science", icon: "ti-atom", hint: "Einstein's most famous theory, informally praised" },
+    { phrase: "THE ATOM IS TINY", category: "Science", icon: "ti-atom", hint: "Understatement of the millennium in physics" },
+    { phrase: "GRAVITY PULLS US", category: "Science", icon: "ti-atom", hint: "Newton's universal law, stated simply" },
+    // HISTORY
+    { phrase: "BERLIN WALL FELL", category: "History", icon: "ti-clock", hint: "This happened in November 1989, marking the end of an era" },
+    { phrase: "BOSTON TEA PARTY", category: "History", icon: "ti-clock", hint: "A 1773 protest that helped spark the American Revolution" },
+    { phrase: "VESUVIUS ERUPTED", category: "History", icon: "ti-clock", hint: "This Italian volcano buried Pompeii in 79 AD" },
+    { phrase: "WRIGHT BROS FLEW", category: "History", icon: "ti-clock", hint: "Orville and Wilbur's achievement at Kitty Hawk, December 1903" },
+    { phrase: "HANNIBAL CROSSED", category: "History", icon: "ti-clock", hint: "The Carthaginian general who led elephants over the Alps" },
+    { phrase: "THE AZTEC EMPIRE", category: "History", icon: "ti-clock", hint: "Mesoamerican civilization eventually conquered by Hernán Cortés" },
+    // POP CULTURE
+    { phrase: "WINTER IS COMING", category: "Pop Culture", icon: "ti-star", hint: "House Stark's famous motto from Game of Thrones" },
+    { phrase: "HEISENBERG COOKS", category: "Pop Culture", icon: "ti-star", hint: "Breaking Bad: Walter White's alter ego and his specialty" },
+    { phrase: "I AM THE ONE WHO", category: "Pop Culture", icon: "ti-star", hint: "Breaking Bad: Walter's declaration — the last word is 'knocks'" },
+    { phrase: "BOLDLY GOING NOW", category: "Pop Culture", icon: "ti-star", hint: "Star Trek's mission to explore strange new worlds, made present tense" },
+    // FOOD & DRINK
+    { phrase: "PIZZA MARGHERITA", category: "Food & Drink", icon: "ti-salad", hint: "Named after an Italian queen, topped with tomato, mozzarella, and basil" },
+    { phrase: "SPAGHETTI DINNER", category: "Food & Drink", icon: "ti-salad", hint: "The classic Italian-American comfort food occasion" },
+    // ANIMALS
+    { phrase: "ELEPHANTS RECALL", category: "Animals", icon: "ti-paw", hint: "The saying is that elephants never... what?" },
+  ];
+
+  // =====================================================
+  // CONSTANTS
+  // =====================================================
+  const MAX_GUESSES = 6;
+  const PHRASE_LEN  = 16;
+  const KEYBOARD_ROWS = [
+    ['Q','W','E','R','T','Y','U','I','O','P'],
+    ['A','S','D','F','G','H','J','K','L'],
+    ['ENTER','Z','X','C','V','B','N','M','⌫']
+  ];
+
+  // =====================================================
+  // DAILY PHRASE SELECTION
+  // Epoch: Jan 1 2025. Cycles through all valid phrases.
+  // To change the start date, update EPOCH below.
+  // =====================================================
+  function getDailyData() {
+    const EPOCH = new Date(2025, 0, 1);
+    const now   = new Date();
+    const n     = Math.floor((now - EPOCH) / 864e5) + 1;
+    const valid = PHRASE_DATA.filter(p => p.phrase.length === PHRASE_LEN);
+    const idx   = ((n - 1) % valid.length + valid.length) % valid.length;
+    return { ...valid[idx], dayNum: n };
+  }
+
+  function getStorageKey() {
+    const d = new Date();
+    return `passphrase-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  // =====================================================
+  // GUESS EVALUATION
+  // Two-pass: exact matches first, then wrong-position.
+  // =====================================================
+  function evaluateGuess(guess, phrase) {
+    const result = Array(PHRASE_LEN).fill('absent');
+    const remaining = [...phrase];
+
+    // Mark spaces
+    for (let i = 0; i < PHRASE_LEN; i++) {
+      if (phrase[i] === ' ') result[i] = 'space';
+    }
+    // Pass 1: correct positions
+    for (let i = 0; i < PHRASE_LEN; i++) {
+      if (phrase[i] === ' ') continue;
+      if (guess[i] === phrase[i]) { result[i] = 'correct'; remaining[i] = null; }
+    }
+    // Pass 2: wrong positions
+    for (let i = 0; i < PHRASE_LEN; i++) {
+      if (phrase[i] === ' ' || result[i] === 'correct') continue;
+      const j = remaining.indexOf(guess[i]);
+      if (j >= 0 && guess[i]) { result[i] = 'present'; remaining[j] = null; }
+    }
+    return result;
+  }
+
+  // =====================================================
+  // SCREEN READER ANNOUNCEMENTS
+  // =====================================================
+  function announce(text, urgent) {
+    const el = document.getElementById(urgent ? 'sr-msg' : 'sr-status');
+    if (!el) return;
+    el.textContent = '';
+    requestAnimationFrame(() => { el.textContent = text; });
+  }
+
+  // =====================================================
+  // GAME STATE
+  // =====================================================
+  const daily = getDailyData();
+  const { phrase, category, icon, hint, dayNum } = daily;
+
+  const spaceSet  = new Set(phrase.split('').map((c, i) => c === ' ' ? i : -1).filter(i => i >= 0));
+  const allLetterIdx = phrase.split('').map((c, i) => c !== ' ' ? i : -1).filter(i => i >= 0);
+
+  let state = {
+    guesses:   [],
+    input:     '',
+    over:      false,
+    won:       false,
+    keyStates: {},
+    hintOn:    false,
+    freePos:   null,
+    canPU:     true,
+    msg:       { text: '', type: '' },
+    shakeRow:  -1,
+    copied:    false,
+  };
+
+  function getActiveLetterIdx() {
+    return state.freePos !== null
+      ? allLetterIdx.filter(i => i !== state.freePos)
+      : allLetterIdx;
+  }
+  function getMaxLetters() { return getActiveLetterIdx().length; }
+  function getPosToInputIdx() {
+    const m = {};
+    getActiveLetterIdx().forEach((pos, idx) => { m[pos] = idx; });
+    return m;
+  }
+
+  // =====================================================
+  // ACTIONS
+  // =====================================================
+  let msgTimer = null;
+  function flash(text, type, ms = 2500) {
+    if (msgTimer) clearTimeout(msgTimer);
+    state.msg = { text, type };
+    if (ms > 0) msgTimer = setTimeout(() => { state.msg = { text: '', type: '' }; render(); }, ms);
+    render();
+  }
+
+  function submitGuess() {
+    const maxL = getMaxLetters();
+    if (state.over || state.input.length < maxL) {
+      if (state.input.length < maxL) {
+        state.shakeRow = state.guesses.length;
+        announce('Not enough letters.', true);
+        flash('Not enough letters', 'warn');
+        setTimeout(() => { state.shakeRow = -1; render(); }, 500);
+      }
+      return;
+    }
+
+    // Build full 16-char guess (inserting free letter and spaces)
+    let full = '', ii = 0;
+    for (let i = 0; i < PHRASE_LEN; i++) {
+      if (spaceSet.has(i))       full += ' ';
+      else if (i === state.freePos) full += phrase[i];
+      else                       full += state.input[ii++] || '?';
+    }
+
+    const result = evaluateGuess(full, phrase);
+
+    // Update keyboard state
+    const nks = { ...state.keyStates };
+    full.split('').forEach((ch, i) => {
+      if (phrase[i] === ' ') return;
+      const r = result[i], prev = nks[ch];
+      if (r === 'correct') nks[ch] = 'correct';
+      else if (r === 'present' && prev !== 'correct') nks[ch] = 'present';
+      else if (!prev) nks[ch] = 'absent';
+    });
+
+    state.guesses.push({ letters: full, results: result });
+    state.input = '';
+    state.keyStates = nks;
+
+    const won = full === phrase;
+    const gc  = state.guesses.length;
+
+    if (won) {
+      state.won = true; state.over = true;
+      announce(`Correct! Solved in ${gc} ${gc === 1 ? 'guess' : 'guesses'}.`, true);
+      const msgs = ['Brilliant!', 'Excellent!', 'Well done!', 'Nice one!', 'Phew!', 'Lucky!'];
+      flash(msgs[gc - 1] || 'Got it!', 'win', 0);
+    } else if (gc >= MAX_GUESSES) {
+      state.over = true;
+      announce(`Game over. The phrase was: ${phrase}.`, true);
+      flash(phrase, 'lose', 0);
+    } else {
+      const cor = result.filter(r => r === 'correct').length;
+      const pre = result.filter(r => r === 'present').length;
+      announce(`Guess ${gc}: ${cor} correct, ${pre} in wrong position.`, false);
+    }
+
+    saveState();
+    render();
+  }
+
+  function handleKey(k) {
+    if (state.over) return;
+    if (k === 'ENTER') { submitGuess(); return; }
+    if (k === '⌫' || k === 'BACKSPACE') { state.input = state.input.slice(0, -1); render(); return; }
+    if (/^[A-Z]$/.test(k) && state.input.length < getMaxLetters()) { state.input += k; render(); }
+  }
+
+  function useHint() {
+    if (!state.canPU || state.over) return;
+    state.hintOn = true;
+    state.canPU  = false;
+    announce(`Hint: ${hint}`, false);
+    saveState();
+    render();
+  }
+
+  function useFreeLetter() {
+    if (!state.canPU || state.over) return;
+    const available = allLetterIdx.filter(i => !state.guesses.some(g => g.results[i] === 'correct'));
+    if (!available.length) return;
+    const pos = available[Math.floor(Math.random() * available.length)];
+    state.freePos = pos;
+    state.canPU   = false;
+    if (state.input.length > getMaxLetters()) state.input = state.input.slice(0, getMaxLetters());
+    announce(`Free letter: one position has been filled with ${phrase[pos]}.`, false);
+    saveState();
+    render();
+  }
+
+  function shareResults() {
+    let s = `Passphrase #${dayNum} — ${category}\n${state.won ? state.guesses.length : 'X'}/${MAX_GUESSES}`;
+    if (state.hintOn)   s += ' 💡';
+    if (state.freePos !== null) s += ' 🔑';
+    s += '\n\n';
+    state.guesses.forEach(g => {
+      g.results.forEach(r => {
+        s += r === 'correct' ? '🟧' : r === 'present' ? '🟦' : r === 'space' ? '⬛' : '⬜';
+      });
+      s += '\n';
+    });
+    s += '\nits.syr.edu/passphrase';
+    navigator.clipboard.writeText(s).then(() => {
+      state.copied = true;
+      announce('Results copied to clipboard.', false);
+      render();
+      setTimeout(() => { state.copied = false; render(); }, 2000);
+    }).catch(() => flash('Copy failed', 'warn'));
+  }
+
+  // =====================================================
+  // PERSISTENCE (localStorage)
+  // =====================================================
+  function saveState() {
+    try {
+      localStorage.setItem(getStorageKey(), JSON.stringify({
+        phrase,
+        guesses:   state.guesses,
+        over:      state.over,
+        won:       state.won,
+        keyStates: state.keyStates,
+        hintOn:    state.hintOn,
+        freePos:   state.freePos,
+        canPU:     state.canPU,
+      }));
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(getStorageKey());
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      // Only restore if it's for today's phrase
+      if (saved.phrase !== phrase) return;
+      state.guesses   = saved.guesses   || [];
+      state.over      = saved.over      || false;
+      state.won       = saved.won       || false;
+      state.keyStates = saved.keyStates || {};
+      state.hintOn    = saved.hintOn    || false;
+      state.freePos   = saved.freePos   ?? null;
+      state.canPU     = saved.canPU     ?? true;
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  // =====================================================
+  // BUILD ROW DATA
+  // =====================================================
+  function buildRow(rowIndex) {
+    const guess   = state.guesses[rowIndex];
+    const isCurr  = rowIndex === state.guesses.length && !state.over;
+    const posToIdx = getPosToInputIdx();
+    const cells   = [];
+    let posNum    = 0;
+
+    for (let i = 0; i < PHRASE_LEN; i++) {
+      if (spaceSet.has(i)) { cells.push({ type: 'space' }); continue; }
+      posNum++;
+
+      if (state.freePos === i && !guess) {
+        cells.push({
+          type: 'letter', ch: phrase[i], cls: 'cell-free', indicator: '★',
+          ariaLabel: `Position ${posNum}, free letter ${phrase[i]}`
+        });
+        continue;
+      }
+
+      if (guess) {
+        const st = guess.results[i];
+        const cls = st === 'correct' ? 'cell-correct' : st === 'present' ? 'cell-present' : 'cell-absent';
+        const ind = st === 'correct' ? '✓' : st === 'present' ? '~' : '✕';
+        const stName = st === 'correct' ? 'correct position' : st === 'present' ? 'wrong position' : 'not in phrase';
+        cells.push({ type: 'letter', ch: guess.letters[i], cls, indicator: ind, ariaLabel: `${guess.letters[i]}, ${stName}` });
+
+      } else if (isCurr) {
+        const idx = posToIdx[i];
+        const ch  = state.input[idx] || '';
+        const cls = ch ? 'cell-filled' : 'cell-empty';
+        const blink = idx === state.input.length ? ' pp-blink' : '';
+        cells.push({ type: 'letter', ch, cls: cls + blink, ariaLabel: ch ? `Position ${posNum}, letter ${ch}` : `Position ${posNum}, empty` });
+
+      } else {
+        cells.push({ type: 'letter', ch: '', cls: 'cell-empty', ariaLabel: `Position ${posNum}, empty` });
+      }
+    }
+    return cells;
+  }
+
+  // =====================================================
+  // RENDER
+  // =====================================================
+  function render() {
+    const el = document.getElementById('passphrase-game');
+    if (!el) return;
+
+    // Preserve focus across renders
+    const prevKey = document.activeElement?.getAttribute('data-key');
+    const prevId  = document.activeElement?.id;
+
+    const msgTypeClass = {
+      win: 'msg-win', lose: 'msg-lose', warn: 'msg-warn'
+    }[state.msg.type] || 'msg-neutral';
+
+    let html = `
+      <p class="sr-only">
+        Passphrase daily word game. Puzzle ${dayNum}. Category: ${category}.
+        Use the keyboard to type letters and press Enter to submit.
+        ${MAX_GUESSES - state.guesses.length} guesses remaining.
+      </p>
+
+      <header class="game-header gh-border">
+        <div class="header-title">
+          <i class="ti ti-lock" style="font-size:20px;color:#888" aria-hidden="true"></i>
+          <h1>PASSPHRASE</h1>
+        </div>
+        <p class="header-sub">DAILY #${dayNum} &nbsp;·&nbsp; SYRACUSE UNIVERSITY ITS</p>
+      </header>
+
+      <div class="cat-badge" role="status" aria-label="Today's category: ${category}">
+        <i class="ti ${icon}" aria-hidden="true"></i>
+        ${category.toUpperCase()}
+      </div>`;
+
+    if (state.hintOn) {
+      html += `<div class="hint-text" role="note" aria-label="Hint: ${hint}">
+        <i class="ti ti-bulb" style="font-size:13px;vertical-align:-1px;margin-right:5px" aria-hidden="true"></i>${hint}
+      </div>`;
+    }
+
+    if (state.freePos !== null && !state.hintOn) {
+      html += `<div class="hint-text" style="font-style:normal;font-size:11px" role="note">
+        <i class="ti ti-key" style="font-size:13px;vertical-align:-1px;margin-right:5px;color:#8a6114" aria-hidden="true"></i>
+        One letter revealed — find the gold cell in your row
+      </div>`;
+    }
+
+    if (state.canPU && !state.over) {
+      html += `<div class="pu-row" role="group" aria-label="One-time power-ups — choose one">
+        <button class="pu-btn" id="btn-hint" onclick="useHint()" aria-label="Reveal a hint about today's phrase">
+          <i class="ti ti-bulb" aria-hidden="true"></i>HINT
+        </button>
+        <button class="pu-btn" id="btn-free" onclick="useFreeLetter()" aria-label="Reveal one free letter in the phrase">
+          <i class="ti ti-key" aria-hidden="true"></i>FREE LETTER
+        </button>
+      </div>`;
+    }
+
+    if (state.msg.text) {
+      html += `<div class="game-msg ${msgTypeClass}" role="alert">${state.msg.text}</div>`;
+    }
+
+    // Grid
+    html += `<div class="pp-grid" role="grid" aria-label="Guess grid, ${state.guesses.length} of ${MAX_GUESSES} guesses used">`;
+    for (let ri = 0; ri < MAX_GUESSES; ri++) {
+      const row    = buildRow(ri);
+      const g      = state.guesses[ri];
+      const isCurr = ri === state.guesses.length && !state.over;
+      const shake  = state.shakeRow === ri ? ' pp-shake' : '';
+
+      let rowLabel = '';
+      if (g) {
+        const cor = g.results.filter(r => r === 'correct').length;
+        const pre = g.results.filter(r => r === 'present').length;
+        rowLabel = `Guess ${ri + 1} of ${MAX_GUESSES}: ${cor} correct, ${pre} in wrong position`;
+      } else if (isCurr) {
+        rowLabel = `Current guess, ${state.input.length} of ${getMaxLetters()} letters entered`;
+      } else {
+        rowLabel = `Guess row ${ri + 1}, empty`;
+      }
+
+      html += `<div class="pp-row${shake}" role="row" aria-label="${rowLabel}">`;
+      row.forEach(cell => {
+        if (cell.type === 'space') {
+          html += `<div class="word-gap" role="separator" aria-hidden="true"><div class="word-div"></div></div>`;
+        } else {
+          html += `<div class="pp-cell ${cell.cls}" role="gridcell" aria-label="${cell.ariaLabel}">
+            <span aria-hidden="true">${cell.ch}</span>
+            ${cell.indicator ? `<span class="cell-indicator" aria-hidden="true">${cell.indicator}</span>` : ''}
+          </div>`;
+        }
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+
+    // Instructions (first view only)
+    if (state.guesses.length === 0 && !state.over && !state.hintOn && state.freePos === null) {
+      html += `<p style="margin:0 0 14px;font-size:10px;color:#888;letter-spacing:1px;text-align:center;line-height:1.9;font-family:'Sherman Sans','Verdana',Geneva,sans-serif" aria-hidden="true">
+        GUESS THE 16-CHARACTER PHRASE IN 6 TRIES<br>VERTICAL LINES MARK WORD BOUNDARIES
+      </p>`;
+    }
+
+    // Keyboard
+    html += `<div class="pp-keyboard" role="group" aria-label="On-screen keyboard">`;
+    KEYBOARD_ROWS.forEach(row => {
+      html += `<div class="kbd-row">`;
+      row.forEach(k => {
+        const st = state.keyStates[k];
+        const stLabel = st === 'correct' ? ', marked correct' : st === 'present' ? ', in phrase wrong position' : st === 'absent' ? ', not in phrase' : '';
+        const ariaLabel = k === 'ENTER' ? 'Submit guess' : k === '⌫' ? 'Delete last letter' : `Type letter ${k}${stLabel}`;
+        const cls = 'pp-key' + (k.length > 1 ? ' pp-key-wide' : '') + (st ? ` k${st[0]}` : '');
+        const label = k === '⌫' ? `<i class="ti ti-backspace" style="font-size:16px" aria-hidden="true"></i>` : k;
+        html += `<button class="${cls}" data-key="${k}" onclick="handleKey('${k}')" aria-label="${ariaLabel}">${label}</button>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+
+    // Game over
+    if (state.over) {
+      html += `<div class="gameover-panel">
+        <button class="share-btn" id="btn-share" onclick="shareResults()" aria-label="${state.copied ? 'Results copied to clipboard' : 'Copy your results to share'}">
+          <i class="ti ti-share" style="font-size:15px" aria-hidden="true"></i>
+          ${state.copied ? 'COPIED!' : 'SHARE RESULTS'}
+        </button>
+        <p class="sub-note">New passphrase tomorrow &nbsp;·&nbsp; ${state.won ? state.guesses.length : 'X'}/${MAX_GUESSES}</p>
+      </div>`;
+    }
+
+    // Legend
+    html += `<div class="pp-legend" role="list" aria-label="Color and symbol legend">
+      <div class="legend-item" role="listitem">
+        <div class="legend-dot" style="background:#B83C00" aria-hidden="true">✓</div>Correct position
+      </div>
+      <div class="legend-item" role="listitem">
+        <div class="legend-dot" style="background:#003087" aria-hidden="true">~</div>Wrong position
+      </div>
+      <div class="legend-item" role="listitem">
+        <div class="legend-dot" style="background:#6b6b6b" aria-hidden="true">✕</div>Not in phrase
+      </div>
+      <div class="legend-item" role="listitem">
+        <div class="legend-dot" style="background:#FAC775;border:1px solid #8a6114;color:#5a3d00" aria-hidden="true">★</div>Free letter
+      </div>
+    </div>`;
+
+    el.innerHTML = html;
+
+    // Restore focus after render
+    if (prevKey) {
+      const t = el.querySelector(`[data-key="${prevKey}"]`);
+      if (t) t.focus({ preventScroll: true });
+    } else if (prevId) {
+      const t = document.getElementById(prevId) || el.querySelector(`#${prevId}`);
+      if (t) t.focus({ preventScroll: true });
+    }
+  }
+
+  // =====================================================
+  // PHYSICAL KEYBOARD INPUT
+  // =====================================================
+  document.addEventListener('keydown', e => {
+    const k = e.key.toUpperCase();
+    if (k === 'ENTER') handleKey('ENTER');
+    else if (k === 'BACKSPACE') handleKey('⌫');
+    else if (/^[A-Z]$/.test(k) && !e.ctrlKey && !e.metaKey && !e.altKey) handleKey(k);
+  });
+
+  // =====================================================
+  // INIT
+  // =====================================================
+  document.getElementById('passphrase-game').setAttribute(
+    'aria-label',
+    `Passphrase daily word game, puzzle ${dayNum}, category ${category}`
+  );
+  loadState();
+  render();
+  </script>
+</body>
+</html>
